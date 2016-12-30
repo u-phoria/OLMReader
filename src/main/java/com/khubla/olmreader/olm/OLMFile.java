@@ -135,7 +135,7 @@ public class OLMFile {
       try {
          for (final Enumeration<ZipArchiveEntry> e = zipfile.getEntries(); e.hasMoreElements();) {
             final ZipArchiveEntry zipEntry = e.nextElement();
-            System.out.println(zipEntry.getName());
+            //System.out.println(zipEntry.getName());
             if (zipEntry.isDirectory() == false) {
                if (zipEntry.getName().trim().toLowerCase().endsWith(XML)) {
                   /*

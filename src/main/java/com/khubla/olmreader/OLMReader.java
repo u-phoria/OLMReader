@@ -3,6 +3,7 @@ package com.khubla.olmreader;
 import java.io.IOException;
 import java.util.List;
 
+import com.khubla.olmreader.olm.generated.EmailAddress;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -23,7 +24,7 @@ public class OLMReader implements OLMMessageCallback, OLMRawMessageCallback {
    private static final String FILE_OPTION = "file";
 
    public static void main(String[] args) throws IOException {
-      System.out.println("khubla.com OLM Reader");
+      //System.out.println("khubla.com OLM Reader");
       /*
        * options
        */
@@ -57,23 +58,38 @@ public class OLMReader implements OLMMessageCallback, OLMRawMessageCallback {
 
    @Override
    public void categories(Categories categories) {
-      System.out.println(categories.getCategory().size());
+      //System.out.println(categories.getCategory().size());
    }
 
    @Override
    public void message(Emails.Email email) {
-      try {
-         if (null != email.getOPFMessageCopyAttachmentList()) {
-            final List<Emails.Email.OPFMessageCopyAttachmentList.MessageAttachment> attachments = email.getOPFMessageCopyAttachmentList().getMessageAttachment();
-            if (attachments != null) {
-               for (int i = 0; i < attachments.size(); i++) {
-                  olmFile.readAttachment(attachments.get(i));
-               }
-            }
-         }
-      } catch (final Exception e) {
-         e.printStackTrace();
+      String from = "";
+      if (email.getOPFMessageCopyFromAddresses() != null) {
+         List<EmailAddress> emailAddresses = email.getOPFMessageCopyFromAddresses().getEmailAddress();
+         assert emailAddresses.size() < 2;
+         if (!emailAddresses.isEmpty())
+            from = emailAddresses.get(0).getOPFContactEmailAddressAddress().toLowerCase();
       }
+
+      String to = "";
+      if (email.getOPFMessageCopyToAddresses() != null) {
+         for (EmailAddress e : email.getOPFMessageCopyToAddresses().getEmailAddress()) {
+            if (to.length() > 0) to += ",";
+            to += e.getOPFContactEmailAddressAddress().toLowerCase();
+         }
+      }
+
+      String cc = "";
+      if (email.getOPFMessageCopyCCAddresses() != null) {
+         for (EmailAddress e : email.getOPFMessageCopyCCAddresses().getEmailAddress()) {
+            if (cc.length() > 0) to += ",";
+            cc += e.getOPFContactEmailAddressAddress().toLowerCase();
+         }
+      }
+
+      String sentTime = email.getOPFMessageCopySentTime().getValue();
+
+      System.out.println(String.format("\"%s\",\"%s\",\"%s\",\"%s\"", from, to, cc, sentTime));
    }
 
    @Override
@@ -82,6 +98,7 @@ public class OLMReader implements OLMMessageCallback, OLMRawMessageCallback {
    }
 
    public void read(String filename) throws IOException {
+      System.out.println("\"from\",\"to\",\"cc\",\"sent_time\"");
       olmFile = new OLMFile(filename);
       olmFile.readOLMFile(this, this);
    }
